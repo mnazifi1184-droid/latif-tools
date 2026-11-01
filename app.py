@@ -16,7 +16,7 @@ app.secret_key = secrets.token_hex(32)  # TODO: از متغیر محیطی بخ�
 FA_DIGITS = "۰۱۲۳۴۵۶۷۸۹"
 AR_DIGITS = "٠١٢٣٤٥٦٧٨٩"
 
-OTP_TTL = 120  # seconds
+OTP_TTL = 300  # seconds — email may arrive late
 _otp_store: dict[str, dict] = {}  # email -> {"code": str, "expires": float}
 _otp_send_ts: dict[str, float] = {}  # email -> last send timestamp (rate limit)
 

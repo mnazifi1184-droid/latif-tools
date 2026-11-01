@@ -470,11 +470,11 @@
       var email = String(body.email || "").trim().toLowerCase();
       if (!EMAIL_RE.test(email)) return fail("ایمیل معتبر نیست.");
       var code = String(Math.floor(100000 + Math.random() * 900000));
-      otpStore[email] = { code: code, exp: Date.now() + 120000 };
+      otpStore[email] = { code: code, exp: Date.now() + 300000 };
       var local = email.split("@")[0];
       var masked = (local.length > 2 ? local.slice(0, 2) + "***" : "***") + "@" + email.split("@")[1];
       demoBanner(code);
-      return ok({ ok: true, ttl: 120, masked: masked });
+      return ok({ ok: true, ttl: 300, masked: masked });
     }
     if (url === "/api/otp/verify") {
       var em = String(body.email || "").trim().toLowerCase();
@@ -675,11 +675,12 @@
   }
   function startTimer(ttl) {
     stopTimer();
-    var left = ttl;
+    var left = ttl, resendLeft = 45;   /* resend allowed after 45s (server rate limit) */
     $("#resend").disabled = true;
     $("#otp-timer").textContent = faTime(left);
     timerId = setInterval(function () {
-      left--;
+      left--; resendLeft--;
+      if (resendLeft <= 0 && $("#resend").disabled) $("#resend").disabled = false;
       if (left <= 0) {
         stopTimer();
         $("#otp-timer").textContent = "۰۰:۰۰";

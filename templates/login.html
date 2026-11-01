@@ -602,11 +602,12 @@
   }
   function startTimer(ttl) {
     stopTimer();
-    var left = ttl;
+    var left = ttl, resendLeft = 45;   /* resend allowed after 45s (server rate limit) */
     $("#resend").disabled = true;
     $("#otp-timer").textContent = faTime(left);
     timerId = setInterval(function () {
-      left--;
+      left--; resendLeft--;
+      if (resendLeft <= 0 && $("#resend").disabled) $("#resend").disabled = false;
       if (left <= 0) {
         stopTimer();
         $("#otp-timer").textContent = "۰۰:۰۰";
