@@ -557,7 +557,7 @@
           $("#masked-email").textContent = data.masked || email;
           otpStep(2);
           startTimer(data.ttl || 120);
-          showMsg($("#msg-otp2"), "info", "کد ارسال شد. (حالت دمو: کد " + (data.demo_code || "------") + ")");
+          showMsg($("#msg-otp2"), "ok", "کد به ایمیلت ارسال شد؛ ورودش کن (شاید دیر برس یا به Spam بره).");
         } else {
           showMsg($("#msg-otp"), "error", data.error || "ارسال کد ناموفق بود.");
         }
@@ -634,7 +634,7 @@
           hideMsg($("#msg-otp2"));
           otpInputs.forEach(function (x) { x.value = ""; x.classList.remove("filled"); });
           otpInputs[0].focus();
-          showMsg($("#msg-otp2"), "info", "کد جدید ارسال شد. (حالت دمو: کد " + (data.demo_code || "------") + ")");
+          showMsg($("#msg-otp2"), "ok", "کد جدید به ایمیلت ارسال شد.");
         }
       })
       .catch(function () {});

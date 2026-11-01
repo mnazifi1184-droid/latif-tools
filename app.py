@@ -5,6 +5,8 @@ import re
 import secrets
 import time
 
+import mailer
+
 from flask import (Flask, jsonify, redirect, render_template, request,
                    send_from_directory, session, url_for)
 
@@ -16,6 +18,7 @@ AR_DIGITS = "٠١٢٣٤٥٦٧٨٩"
 
 OTP_TTL = 120  # seconds
 _otp_store: dict[str, dict] = {}  # email -> {"code": str, "expires": float}
+_otp_send_ts: dict[str, float] = {}  # email -> last send timestamp (rate limit)
 
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
@@ -112,21 +115,30 @@ def api_login():
 
 @app.post("/api/otp/request")
 def api_otp_request():
-    """Send an OTP code by EMAIL — demo mode returns the code for testing.
-
-    TODO: ارسال واقعی با SMTP جی‌میل (App Password) یا سرویس ایمیل؛
-          کد هرگز نباید در پاسخ برگردانده شود.
-    """
+    """Send an OTP code by EMAIL via Gmail SMTP (App Password)."""
     data = request.get_json(silent=True) or {}
     email = str(data.get("email", "")).strip().lower()
 
     if not valid_email(email):
-        return jsonify(ok=False, error="ایمیل معتبر نیست؛ مثل example@gmail.com واردش کن."), 400
+        return jsonify(ok=False, error="ایمیل جی‌میل/ایمیل معتبر نیست؛ مثل example@gmail.com واردش کن."), 400
 
-    code = f"{random.randint(0, 999999):06d}"  # noqa: S311 (demo only)
+    # rate limit: one email per 45s per address
+    now = time.time()
+    last = _otp_send_ts.get(email, 0)
+    if now - last < 45:
+        return jsonify(ok=False, error="کمی صبر کن؛ کد جدید بعد از ۴۵ ثانیه قابل ارسال است."), 429
+
+    code = f"{secrets.randbelow(1000000):06d}"
     _otp_store[email] = {"code": code, "expires": time.time() + OTP_TTL}
+    _otp_send_ts[email] = now
 
-    return jsonify(ok=True, ttl=OTP_TTL, demo_code=code, masked=mask_email(email))
+    sent = mailer.send_otp_email(email, code)
+    if not sent[0]:
+        # SMTP misconfigured or down — never leak the code, keep flow safe
+        return jsonify(ok=False, error="ارسال ایمیل با خطا مواجه شد: " + sent[1]), 502
+
+    resp = jsonify(ok=True, ttl=OTP_TTL, masked=mask_email(email))
+    return resp
 
 
 @app.post("/api/otp/verify")

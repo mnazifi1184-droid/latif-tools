@@ -454,6 +454,18 @@
       localStorage.setItem("latif_user", JSON.stringify(u1));
       return ok({ ok: true, user: u1 });
     }
+    function demoBanner(code) {
+      setTimeout(function () {
+        var old = document.getElementById("demo-banner");
+        if (old) old.remove();
+        var d = document.createElement("div");
+        d.id = "demo-banner";
+        d.style.cssText = "position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#F2B33D;color:#141428;font-weight:700;padding:10px 20px;border-radius:12px;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.45);font-size:14px;font-family:inherit";
+        d.textContent = "حالت دمو — کد ورود: " + code;
+        document.body.appendChild(d);
+        setTimeout(function () { if (d.parentNode) d.remove(); }, 15000);
+      }, 60);
+    }
     if (url === "/api/otp/request") {
       var email = String(body.email || "").trim().toLowerCase();
       if (!EMAIL_RE.test(email)) return fail("ایمیل معتبر نیست.");
@@ -461,7 +473,8 @@
       otpStore[email] = { code: code, exp: Date.now() + 120000 };
       var local = email.split("@")[0];
       var masked = (local.length > 2 ? local.slice(0, 2) + "***" : "***") + "@" + email.split("@")[1];
-      return ok({ ok: true, ttl: 120, demo_code: code, masked: masked });
+      demoBanner(code);
+      return ok({ ok: true, ttl: 120, masked: masked });
     }
     if (url === "/api/otp/verify") {
       var em = String(body.email || "").trim().toLowerCase();
@@ -617,7 +630,7 @@
           $("#masked-email").textContent = data.masked || email;
           otpStep(2);
           startTimer(data.ttl || 120);
-          showMsg($("#msg-otp2"), "info", "کد ارسال شد. (حالت دمو: کد " + (data.demo_code || "------") + ")");
+          showMsg($("#msg-otp2"), "ok", "کد به ایمیلت ارسال شد؛ ورودش کن (شاید دیر برس یا به Spam بره).");
         } else {
           showMsg($("#msg-otp"), "error", data.error || "ارسال کد ناموفق بود.");
         }
@@ -694,7 +707,7 @@
           hideMsg($("#msg-otp2"));
           otpInputs.forEach(function (x) { x.value = ""; x.classList.remove("filled"); });
           otpInputs[0].focus();
-          showMsg($("#msg-otp2"), "info", "کد جدید ارسال شد. (حالت دمو: کد " + (data.demo_code || "------") + ")");
+          showMsg($("#msg-otp2"), "ok", "کد جدید به ایمیلت ارسال شد.");
         }
       })
       .catch(function () {});
