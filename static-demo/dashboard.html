@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>داشبورد | لاتیف تولز</title>
+<style>
+  @font-face { font-family: "Vazirmatn"; src: url("fonts/Vazirmatn-Regular.ttf"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Vazirmatn"; src: url("fonts/Vazirmatn-Bold.ttf"); font-weight: 700; font-display: swap; }
+
+  :root {
+    --bg: #0B1220; --bg-2: #101A2E; --panel: rgba(16, 26, 46, .6);
+    --text: #EAF0FA; --muted: #93A4C3;
+    --accent: #F2B33D; --accent-2: #5B7CFA;
+    --line: rgba(147, 164, 195, .22);
+    --ok: #4CC38A; --danger: #F26D6D;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Vazirmatn", "Tahoma", sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100dvh; line-height: 1.8; overflow-x: hidden;
+  }
+
+  /* --- هاله‌های پس‌زمینه --- */
+  .aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .aurora span { position: absolute; border-radius: 50%; filter: blur(100px); opacity: .45; }
+  .aurora .a1 { width: 520px; height: 520px; background: radial-gradient(circle, #2B4CC0 0%, transparent 65%); top: -160px; inset-inline-start: -140px; }
+  .aurora .a2 { width: 460px; height: 460px; background: radial-gradient(circle, #7A5BFA 0%, transparent 65%); bottom: -140px; inset-inline-end: -120px; }
+
+  header.topbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 14px 22px;
+    background: rgba(11, 18, 32, .8);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+  .brand .logo {
+    width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+    background: linear-gradient(135deg, #5B7CFA 0%, #7A5BFA 55%, #B44BFA 100%);
+    box-shadow: 0 8px 20px rgba(91, 124, 250, .35);
+  }
+  .brand .logo svg { width: 20px; height: 20px; }
+  .brand small { display: block; color: var(--muted); font-weight: 400; font-size: 11.5px; }
+
+  .userbox { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 15px; color: #101A2E;
+    background: linear-gradient(135deg, #F2B33D, #E8A028);
+    box-shadow: 0 6px 16px rgba(242, 179, 61, .35);
+  }
+  .usermeta { text-align: start; line-height: 1.4; }
+  .usermeta b { font-size: 13.5px; display: block; }
+  .usermeta span { font-size: 11.5px; color: var(--muted); }
+  .btn-logout {
+    appearance: none; border: 1px solid var(--line); border-radius: 11px;
+    background: transparent; color: var(--muted);
+    font: inherit; font-size: 13px; padding: 9px 14px; cursor: pointer;
+    transition: border-color .2s, color .2s;
+  }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+  .btn-logout:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+  main.wrap {
+    position: relative; z-index: 1;
+    max-width: 1080px; margin: 0 auto; padding: 26px 18px 60px;
+  }
+
+  h1.hello { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  p.hint { color: var(--muted); font-size: 13.5px; margin-bottom: 24px; }
+
+  /* --- آمار --- */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px 18px;
+  }
+  .stat .label { font-size: 12.5px; color: var(--muted); }
+  .stat .value { font-size: 26px; font-weight: 700; margin-top: 2px; }
+  .stat .value small { font-size: 13px; color: var(--muted); font-weight: 400; }
+
+  /* --- بخش ابزارها --- */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tool {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+    padding: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .tool h2 { font-size: 15.5px; font-weight: 700; display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
+  .tool h2 .ic { color: var(--accent-2); display: flex; }
+  .tool .desc { color: var(--muted); font-size: 12.5px; margin-bottom: 14px; }
+  .tool.full { grid-column: 1 / -1; }
+
+  label.lbl { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+  textarea, input.in, select.in {
+    width: 100%;
+    background: rgba(11, 18, 32, .6);
+    border: 1px solid var(--line); border-radius: 12px;
+    color: var(--text); font: inherit; font-size: 14px;
+    padding: 11px 14px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  textarea { min-height: 88px; resize: vertical; line-height: 1.9; }
+  textarea:focus, input.in:focus, select.in:focus {
+    outline: none; border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(91, 124, 250, .2);
+  }
+  .row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 120px; }
+
+  .btn {
+    appearance: none; border: 0; border-radius: 12px;
+    padding: 11px 18px; font: inherit; font-size: 14px; font-weight: 700;
+    color: #101A2E; background: linear-gradient(135deg, #F2B33D, #E8A028);
+    cursor: pointer; box-shadow: 0 8px 20px rgba(242, 179, 61, .25);
+    transition: transform .15s, filter .2s;
+  }
+  .btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+  .out {
+    margin-top: 12px;
+    background: rgba(11, 18, 32, .6);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; font-size: 14px; min-height: 44px;
+    white-space: pre-wrap; word-break: break-word;
+    color: #CFE3B8;
+  }
+  .out.empty { color: var(--muted); }
+  .out.num { color: var(--accent); font-weight: 700; font-size: 16px; }
+  .copy {
+    appearance: none; background: transparent; border: 1px solid var(--line);
+    border-radius: 10px; color: var(--muted); font: inherit; font-size: 12px;
+    padding: 6px 12px; cursor: pointer; margin-top: 8px;
+    transition: color .2s, border-color .2s;
+  }
+  .copy:hover { color: var(--text); border-color: var(--accent-2); }
+  .copy:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+  .chart-wrap { height: 260px; width: 100%; margin-top: 6px; }
+
+  .fa-digits { font-variant-numeric: tabular-nums; }
+
+  footer.foot { text-align: center; color: var(--muted); font-size: 12px; margin-top: 40px; }
+  footer.foot strong { color: var(--accent); }
+
+  /* توست */
+  #toast {
+    position: fixed; bottom: 24px; inset-inline-start: 50%; transform: translateX(50%);
+    background: #16223A; border: 1px solid var(--line); border-radius: 12px;
+    color: var(--text); font-size: 13.5px; padding: 11px 20px;
+    box-shadow: 0 14px 40px rgba(0,0,0,.5);
+    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+    z-index: 50;
+  }
+  #toast.show { opacity: 1; transform: translateX(50%) translateY(-6px); }
+
+  @media (max-width: 760px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .grid { grid-template-columns: 1fr; }
+    .usermeta { display: none; }
+  }
+  @media (max-width: 420px) {
+    .stats { grid-template-columns: 1fr; }
+    main.wrap { padding: 20px 14px 50px; }
+    .tool { padding: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true"><span class="a1"></span><span class="a2"></span></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L3 7v6c0 5 3.8 8.4 9 9.6 5.2-1.2 9-4.6 9-9.6V7l-9-5z" fill="rgba(255,255,255,.9)"/>
+        <path d="M9 12.5l2 2 4-4.5" stroke="#5B7CFA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>لاتیف تولز<small>جعبه‌ابزار آنلاین</small></div>
+  </div>
+
+  <div class="userbox">
+    <div class="avatar" id="avatar" aria-hidden="true">؟</div>
+    <div class="usermeta">
+      <b id="user-name">…</b>
+      <span id="user-id"></span>
+    </div>
+    <button class="btn-logout" id="btn-logout">خروج</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1 class="hello">داشبورد ابزارها</h1>
+  <p class="hint">ابزارهای روزمره — همه‌چیز داخل مرورگر پردازش می‌شود و هیچ داده‌ای جایی ارسال نمی‌شود.</p>
+
+  <!-- آمار کاربر -->
+  <section class="stats" aria-label="آمار">
+    <div class="stat"><div class="label">ابزارهای فعال</div><div class="value fa-digits">۶</div></div>
+    <div class="stat"><div class="label">عملیات انجام‌شده در این نشست</div><div class="value fa-digits" id="stat-ops">۰</div></div>
+    <div class="stat"><div class="label">وضعیت حساب</div><div class="value" style="color:var(--ok);font-size:18px">✔ فعال</div></div>
+  </section>
+
+  <section class="grid">
+
+    <!-- ۱: فرمت‌کن متن -->
+    <div class="tool">
+      <h2><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h16v2"/><path d="M12 5v14"/><path d="M9 19h6"/></svg></span>فرمت‌کن متن</h2>
+      <p class="desc">فاصله‌های اضافی، ارقام فارسی و حروف اول بزرگ</p>
+      <textarea id="tx-input" placeholder="متنی بنویس یا بچسبان…"></textarea>
+      <div class="row">
+        <button class="btn" id="tx-clean">پاک‌سازی فاصله‌ها</button>
+        <button class="btn" id="tx-fa">تبدیل به ارقام فارسی</button>
+        <button class="btn" id="tx-en">تبدیل به ارقام انگلیسی</button>
+      </div>
+      <div class="out empty" id="tx-out">نتیجه اینجا نمایش داده می‌شود</div>
+      <button class="copy" data-copy="tx-out">کپی نتیجه</button>
+    </div>
+
+    <!-- ۲: محاسبه‌گر -->
+    <div class="tool">
+      <h2><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M8 6.5h8"/><path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01"/></svg></span>محاسبه‌گر سریع</h2>
+      <p class="desc">عبارت ریاضی را بنویس؛ مثل 12*(3+4)/2</p>
+      <input class="in" id="calc-input" placeholder="مثلاً: 128*3+45/5" inputmode="text" style="direction:ltr;text-align:left">
+      <div class="row"><button class="btn" id="calc-go">محاسبه کن</button></div>
+      <div class="out empty num" id="calc-out">—</div>
+      <button class="copy" data-copy="calc-out">کپی نتیجه</button>
+    </div>
+
+    <!-- ۳: مبدل واحد -->
+    <div class="tool">
+      <h2><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6-6-6"/><path d="M10 11h10"/><path d="M20 7l-4-4"/><path d="M4 21h16"/></svg></span>مبدل واحد</h2>
+      <p class="desc">طول، وزن و دما</p>
+      <div class="row" style="margin-top:0">
+        <input class="in" id="conv-val" placeholder="مقدار" inputmode="decimal">
+        <select class="in" id="conv-type">
+          <option value="km">کیلومتر → مایل</option>
+          <option value="kg">کیلوگرم → پوند</option>
+          <option value="c">سلسیوس → فارنهایت</option>
+        </select>
+      </div>
+      <div class="row"><button class="btn" id="conv-go">تبدیل کن</button></div>
+      <div class="out empty num" id="conv-out">—</div>
+      <button class="copy" data-copy="conv-out">کپی نتیجه</button>
+    </div>
+
+    <!-- ۴: تولید رمز -->
+    <div class="tool">
+      <h2><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/><path d="M12 14.5v2.5"/></svg></span>تولید رمز عبور قوی</h2>
+      <p class="desc">رمز تصادفی و امن — فقط در مرورگر تو ساخته می‌شود</p>
+      <div class="row" style="margin-top:0">
+        <select class="in" id="pass-len">
+          <option value="8">۸ کاراکتر</option>
+          <option value="12" selected>۱۲ کاراکتر</option>
+          <option value="16">۱۶ کاراکتر</option>
+          <option value="20">۲۰ کاراکتر</option>
+        </select>
+        <button class="btn" id="pass-go">تولید کن</button>
+      </div>
+      <div class="out num" id="pass-out" style="direction:ltr;text-align:left">—</div>
+      <button class="copy" data-copy="pass-out">کپی رمز</button>
+    </div>
+
+    <!-- ۵: رمزنگاری Base64 -->
+    <div class="tool">
+      <h2><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.4 8.4-8 9.6C7.4 20.4 4 17 4 12V7l8-4z"/></svg></span>Base64</h2>
+      <p class="desc">کدگذاری و کدگشایی متن</p>
+      <textarea id="b64-input" placeholder="متن…" style="min-height:64px"></textarea>
+      <div class="row">
+        <button class="btn" id="b64-enc">کدگذاری</button>
+        <button class="btn" id="b64-dec">کدگشایی</button>
+      </div>
+      <div class="out empty" id="b64-out" style="direction:ltr;text-align:left">نتیجه اینجا نمایش داده می‌شود</div>
+      <button class="copy" data-copy="b64-out">کپی نتیجه</button>
+    </div>
+
+    <!-- ۶: نمودار فعالیت (Chart.js) -->
+    <div class="tool full">
+      <h2><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>فعالیت هفت روز گذشته</h2>
+      <p class="desc">تعداد عملیات‌های انجام‌شده توسط تو (نمونه)</p>
+      <div class="chart-wrap"><canvas id="chart" role="img" aria-label="نمودار فعالیت هفت روز گذشته"></canvas></div>
+    </div>
+
+  </section>
+
+  <footer class="foot"><strong>لاتیف تولز</strong> — جعبه‌ابزار آنلاین، ساده و سریع</footer>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="vendor/chart.umd.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var FA = "۰۱۲۳۴۵۶۷۸۹";
+
+  var USER = null;
+try { USER = JSON.parse(localStorage.getItem("latif_user")); } catch (e) {}
+if (!USER) { window.location.href = "index.html"; return; }
+
+  /* --- نمایش کاربر --- */
+  var name = USER.name || "کاربر";
+  var uid = USER.email || USER.phone || "";
+  $("#user-name").textContent = name;
+  $("#user-id").textContent = uid;
+  $("#avatar").textContent = (name[0] || "؟").toUpperCase();
+
+  /* --- شمارنده عملیات --- */
+  var ops = 0;
+  function countOp() {
+    ops++;
+    $("#stat-ops").textContent = String(ops).replace(/\d/g, function (d) { return FA[+d]; });
+  }
+  function toast(msg) {
+    var t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(t._tid);
+    t._tid = setTimeout(function () { t.classList.remove("show"); }, 1800);
+  }
+  function faNum(n) {
+    return String(n).replace(/\d/g, function (d) { return FA[+d]; });
+  }
+
+  /* --- خروج --- */
+  $("#btn-logout").addEventListener("click", function () {
+    localStorage.removeItem("latif_user");
+    window.location.href = "index.html";
+  });
+
+  /* --- ابزار ۱: فرمت‌کن متن --- */
+  function setOut(el, text) {
+    el.textContent = text;
+    el.classList.remove("empty");
+    countOp();
+  }
+  $("#tx-clean").addEventListener("click", function () {
+    var v = $("#tx-input").value;
+    if (!v.trim()) return toast("اول متنی وارد کن.");
+    setOut($("#tx-out"), v.replace(/[ \t]+/g, " ").replace(/ ?([،.؛:!؟]) ?/g, "$1 ").replace(/\s*\n\s*/g, "\n").trim());
+  });
+  $("#tx-fa").addEventListener("click", function () {
+    var v = $("#tx-input").value;
+    if (!v.trim()) return toast("اول متنی وارد کن.");
+    setOut($("#tx-out"), v.replace(/[0-9]/g, function (d) { return FA[+d]; }));
+  });
+  $("#tx-en").addEventListener("click", function () {
+    var v = $("#tx-input").value;
+    if (!v.trim()) return toast("اول متنی وارد کن.");
+    setOut($("#tx-out"), v.replace(/[۰-۹]/g, function (d) { return FA.indexOf(d); }));
+  });
+
+  /* --- ابزار ۲: محاسبه‌گر --- */
+  function safeCalc(expr) {
+    if (!/^[0-9+\-*/().\s]+$/.test(expr)) return null;
+    try {
+      var val = Function('"use strict"; return (' + expr + ')')();
+      return (typeof val === "number" && isFinite(val)) ? val : null;
+    } catch (e) { return null; }
+  }
+  $("#calc-go").addEventListener("click", function () {
+    var expr = $("#calc-input").value.replace(/[۰-۹]/g, function (d) { return FA.indexOf(d); });
+    if (!expr.trim()) return toast("یک عبارت ریاضی وارد کن.");
+    var val = safeCalc(expr);
+    if (val === null) { $("#calc-out").textContent = "عبارت نامعتبر است"; return; }
+    $("#calc-out").textContent = faNum(String(Math.round(val * 1e8) / 1e8));
+    $("#calc-out").classList.remove("empty");
+    countOp();
+  });
+  $("#calc-input").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") $("#calc-go").click();
+  });
+
+  /* --- ابزار ۳: مبدل واحد --- */
+  $("#conv-go").addEventListener("click", function () {
+    var raw = $("#conv-val").value.replace(/[۰-۹]/g, function (d) { return FA.indexOf(d); });
+    var v = parseFloat(raw);
+    if (isNaN(v)) return toast("یک عدد وارد کن.");
+    var t = $("#conv-type").value, res, unit;
+    if (t === "km") { res = v * 0.621371; unit = "مایل"; }
+    else if (t === "kg") { res = v * 2.20462; unit = "پوند"; }
+    else { res = v * 9 / 5 + 32; unit = "°F"; }
+    res = Math.round(res * 100) / 100;
+    $("#conv-out").textContent = faNum(res) + " " + unit;
+    $("#conv-out").classList.remove("empty");
+    countOp();
+  });
+
+  /* --- ابزار ۴: تولید رمز --- */
+  function randInt(max) {
+    var a = new Uint32Array(1);
+    crypto.getRandomValues(a);
+    return a[0] % max;
+  }
+  $("#pass-go").addEventListener("click", function () {
+    var len = +$("#pass-len").value;
+    var chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*";
+    var pw = "";
+    for (var i = 0; i < len; i++) pw += chars[randInt(chars.length)];
+    $("#pass-out").textContent = pw;
+    countOp();
+  });
+
+  /* --- ابزار ۵: Base64 --- */
+  $("#b64-enc").addEventListener("click", function () {
+    var v = $("#b64-input").value;
+    if (!v) return toast("متنی وارد کن.");
+    try {
+      setOut($("#b64-out"), btoa(unescape(encodeURIComponent(v))));
+    } catch (e) { $("#b64-out").textContent = "کدگذاری ناموفق بود"; }
+  });
+  $("#b64-dec").addEventListener("click", function () {
+    var v = $("#b64-input").value.trim();
+    if (!v) return toast("متن کدشده را وارد کن.");
+    try {
+      setOut($("#b64-out"), decodeURIComponent(escape(atob(v))));
+    } catch (e) { $("#b64-out").textContent = "متن ورودی کدشده‌ی معتبری نیست"; }
+  });
+
+  /* --- کپی --- */
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var txt = document.getElementById(btn.dataset.copy).textContent;
+      if (!txt || txt === "—" || txt === "نتیجه اینجا نمایش داده می‌شود") return toast("چیزی برای کپی نیست.");
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
+        .then(function () { toast("کپی شد ✔"); })
+        .catch(function () {
+          var ta = document.createElement("textarea");
+          ta.value = txt; document.body.appendChild(ta); ta.select();
+          try { document.execCommand("copy"); toast("کپی شد ✔"); } catch (e) { toast("کپی ناموفق بود"); }
+          document.body.removeChild(ta);
+        });
+    });
+  });
+
+  /* --- نمودار --- */
+  var ctx = $("#chart");
+  if (ctx && window.Chart) {
+    var labels = ["۶ روز پیش", "۵ روز پیش", "۴ روز پیش", "۳ روز پیش", "۲ روز پیش", "دیروز", "امروز"];
+    var data = [3, 7, 4, 9, 6, 11, 5];
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "عملیات",
+          data: data,
+          backgroundColor: "rgba(91, 124, 250, .55)",
+          hoverBackgroundColor: "rgba(242, 179, 61, .8)",
+          borderRadius: 8,
+          maxBarThickness: 42
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#16223A",
+            titleColor: "#EAF0FA",
+            bodyColor: "#93A4C3",
+            borderColor: "rgba(147,164,195,.3)",
+            borderWidth: 1,
+            padding: 10,
+            titleFont: { family: "Vazirmatn" },
+            bodyFont: { family: "Vazirmatn" },
+            callbacks: {
+              label: function (c) {
+                return " " + faNum(c.parsed.y) + " عملیات";
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: "#93A4C3", font: { family: "Vazirmatn", size: 11 } }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(147,164,195,.12)" },
+            ticks: {
+              color: "#93A4C3", font: { family: "Vazirmatn", size: 11 },
+              callback: function (v) { return faNum(v); }
+            }
+          }
+        }
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>

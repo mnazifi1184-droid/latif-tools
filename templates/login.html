@@ -6,16 +6,15 @@
 <meta name="color-scheme" content="dark">
 <title>ورود | لاتیف تولز</title>
 <style>
-  /* ---------- فونت ---------- */
   @font-face {
     font-family: "Vazirmatn";
-    src: url("/static/fonts/Vazirmatn-Regular.ttf");
+    src: url("fonts/Vazirmatn-Regular.ttf");
     font-weight: 400;
     font-display: swap;
   }
   @font-face {
     font-family: "Vazirmatn";
-    src: url("/static/fonts/Vazirmatn-Bold.ttf");
+    src: url("fonts/Vazirmatn-Bold.ttf");
     font-weight: 700;
     font-display: swap;
   }
@@ -35,7 +34,6 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   html, body { height: 100%; }
 
   body {
@@ -51,21 +49,8 @@
     line-height: 1.8;
   }
 
-  /* ---------- پس‌زمینه: هاله‌های نور + شبکه ---------- */
-  .aurora {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  .aurora span {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(90px);
-    opacity: .5;
-    will-change: transform;
-  }
+  .aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .aurora span { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .5; will-change: transform; }
   .aurora .a1 {
     width: 480px; height: 480px;
     background: radial-gradient(circle, #2B4CC0 0%, transparent 65%);
@@ -90,10 +75,7 @@
   @keyframes drift3 { to { transform: translate(-80px, 40px) scale(1.15); } }
 
   .grid-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background-image:
       linear-gradient(var(--line) 1px, transparent 1px),
       linear-gradient(90deg, var(--line) 1px, transparent 1px);
@@ -103,12 +85,9 @@
     opacity: .5;
   }
 
-  /* ---------- کارت ---------- */
   .card {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 420px;
+    position: relative; z-index: 1;
+    width: 100%; max-width: 420px;
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -122,64 +101,36 @@
     from { opacity: 0; transform: translateY(22px) scale(.98); }
     to   { opacity: 1; transform: none; }
   }
-
-  /* خط نورانی بالای کارت */
   .card::before {
     content: "";
-    position: absolute;
-    top: 0; inset-inline: 15%;
-    height: 1px;
+    position: absolute; top: 0; inset-inline: 15%; height: 1px;
     background: linear-gradient(90deg, transparent, rgba(242, 179, 61, .8), transparent);
   }
 
-  /* ---------- لوگو ---------- */
   .logo {
     width: 72px; height: 72px;
     margin: 0 auto 18px;
     border-radius: 22px;
-    display: grid;
-    place-items: center;
+    display: grid; place-items: center;
     background: linear-gradient(135deg, #5B7CFA 0%, #7A5BFA 55%, #B44BFA 100%);
     box-shadow: 0 12px 34px rgba(91, 124, 250, .4), inset 0 1px 0 rgba(255, 255, 255, .25);
   }
   .logo svg { width: 34px; height: 34px; }
 
-  .title {
-    text-align: center;
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -.2px;
-  }
-  .subtitle {
-    text-align: center;
-    color: var(--muted);
-    font-size: 14px;
-    margin-top: 6px;
-    margin-bottom: 26px;
-  }
+  .title { text-align: center; font-size: 24px; font-weight: 700; letter-spacing: -.2px; }
+  .subtitle { text-align: center; color: var(--muted); font-size: 14px; margin-top: 6px; margin-bottom: 26px; }
 
-  /* ---------- تب‌ها ---------- */
   .tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: grid; grid-template-columns: 1fr 1fr;
     background: rgba(11, 18, 32, .6);
     border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 5px;
-    gap: 5px;
+    border-radius: 14px; padding: 5px; gap: 5px;
     margin-bottom: 22px;
   }
   .tab {
-    appearance: none;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    padding: 10px 8px;
-    border-radius: 10px;
-    cursor: pointer;
+    appearance: none; border: 0; background: transparent;
+    color: var(--muted); font: inherit; font-size: 14px; font-weight: 700;
+    padding: 10px 8px; border-radius: 10px; cursor: pointer;
     transition: color .2s, background .25s, box-shadow .25s;
   }
   .tab[aria-selected="true"] {
@@ -189,17 +140,11 @@
   }
   .tab:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
 
-  /* ---------- فرم ---------- */
   .panel { display: none; }
   .panel.active { display: block; animation: panelIn .3s ease both; }
   @keyframes panelIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-  label {
-    display: block;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 
   .field { position: relative; margin-bottom: 16px; }
   .field input {
@@ -208,8 +153,7 @@
     border: 1px solid var(--line);
     border-radius: 13px;
     color: var(--text);
-    font: inherit;
-    font-size: 15px;
+    font: inherit; font-size: 15px;
     padding: 14px 16px 14px 48px;
     transition: border-color .2s, box-shadow .2s, background .2s;
   }
@@ -221,70 +165,43 @@
     background: rgba(11, 18, 32, .8);
   }
   .field .icon {
-    position: absolute;
-    inset-inline-start: 15px;
-    top: 50%;
+    position: absolute; inset-inline-start: 15px; top: 50%;
     transform: translateY(-50%);
-    color: var(--muted);
-    pointer-events: none;
-    display: flex;
+    color: var(--muted); pointer-events: none; display: flex;
   }
 
   .toggle-pass {
-    position: absolute;
-    inset-inline-end: 8px;
-    top: 50%;
+    position: absolute; inset-inline-end: 8px; top: 50%;
     transform: translateY(-50%);
-    background: transparent;
-    border: 0;
-    color: var(--muted);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    display: flex;
+    background: transparent; border: 0; color: var(--muted);
+    cursor: pointer; padding: 8px; border-radius: 8px; display: flex;
   }
   .toggle-pass:hover { color: var(--text); }
   .toggle-pass:focus-visible { outline: 2px solid var(--accent-2); }
 
   .row-between {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 2px 2px 18px;
-    font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin: 2px 2px 18px; font-size: 13px;
   }
   .link {
-    color: var(--accent-2);
-    text-decoration: none;
-    background: none;
-    border: 0;
-    font: inherit;
-    font-size: 13px;
-    cursor: pointer;
-    padding: 0;
+    color: var(--accent-2); text-decoration: none;
+    background: none; border: 0; font: inherit; font-size: 13px;
+    cursor: pointer; padding: 0;
   }
   .link:hover { text-decoration: underline; }
   .link:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; border-radius: 4px; }
 
-  /* ---------- دکمه اصلی ---------- */
   .btn {
     width: 100%;
-    appearance: none;
-    border: 0;
-    border-radius: 13px;
+    appearance: none; border: 0; border-radius: 13px;
     padding: 15px 16px;
-    font: inherit;
-    font-size: 16px;
-    font-weight: 700;
+    font: inherit; font-size: 16px; font-weight: 700;
     color: #101A2E;
     background: linear-gradient(135deg, #F2B33D 0%, #E8A028 100%);
     cursor: pointer;
     box-shadow: 0 10px 26px rgba(242, 179, 61, .3);
     transition: transform .15s, box-shadow .2s, filter .2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
   }
   .btn:hover { filter: brightness(1.06); transform: translateY(-1px); box-shadow: 0 14px 30px rgba(242, 179, 61, .38); }
   .btn:active { transform: translateY(0); }
@@ -293,11 +210,8 @@
 
   .btn-ghost {
     width: 100%;
-    background: transparent;
-    border: 1px solid var(--line);
-    color: var(--text);
-    box-shadow: none;
-    margin-top: 12px;
+    background: transparent; border: 1px solid var(--line);
+    color: var(--text); box-shadow: none; margin-top: 12px;
   }
   .btn-ghost:hover { border-color: var(--accent-2); box-shadow: none; }
 
@@ -313,44 +227,27 @@
   .btn.loading .btn-label { opacity: .75; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ---------- پیام ---------- */
   .msg {
-    font-size: 13.5px;
-    border-radius: 11px;
-    padding: 11px 14px;
-    margin-bottom: 16px;
-    display: none;
-    border: 1px solid transparent;
-    line-height: 1.7;
+    font-size: 13.5px; border-radius: 11px; padding: 11px 14px;
+    margin-bottom: 16px; display: none;
+    border: 1px solid transparent; line-height: 1.7;
   }
   .msg.show { display: block; animation: panelIn .25s ease both; }
   .msg.error { background: rgba(242, 109, 109, .1); border-color: rgba(242, 109, 109, .35); color: #F8A0A0; }
   .msg.ok { background: rgba(76, 195, 138, .1); border-color: rgba(76, 195, 138, .35); color: #7FDDB2; }
   .msg.info { background: rgba(91, 124, 250, .1); border-color: rgba(91, 124, 250, .35); color: #A9BBFA; }
 
-  /* ---------- OTP ---------- */
-  .otp-box {
-    display: flex;
-    gap: 9px;
-    direction: ltr;
-    justify-content: center;
-    margin: 6px 0 18px;
-  }
+  .otp-box { display: flex; gap: 9px; direction: ltr; justify-content: center; margin: 6px 0 18px; }
   .otp-box input {
-    width: 46px;
-    height: 56px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: 700;
+    width: 46px; height: 56px; text-align: center;
+    font-size: 22px; font-weight: 700;
     background: rgba(11, 18, 32, .55);
     border: 1px solid var(--line);
-    border-radius: 12px;
-    color: var(--text);
+    border-radius: 12px; color: var(--text);
     transition: border-color .2s, box-shadow .2s, transform .15s;
   }
   .otp-box input:focus {
-    outline: none;
-    border-color: var(--accent);
+    outline: none; border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(242, 179, 61, .22);
     transform: translateY(-2px);
   }
@@ -360,42 +257,19 @@
   .otp-head .phone { color: var(--accent); font-weight: 700; }
 
   .timer-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    color: var(--muted);
-    margin: 0 2px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: var(--muted); margin: 0 2px 16px;
   }
   .timer { font-variant-numeric: tabular-nums; }
 
-  /* ---------- فوتر ---------- */
-  .foot {
-    margin-top: 22px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 12.5px;
-  }
+  .foot { margin-top: 22px; text-align: center; color: var(--muted); font-size: 12.5px; }
   .foot strong { color: var(--accent); font-weight: 700; }
 
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--muted);
-    font-size: 12px;
-    margin: 22px 0 14px;
-  }
-  .divider::before, .divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: var(--line);
-  }
+  .divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; margin: 22px 0 14px; }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
   .back-row { display: flex; justify-content: flex-start; margin-bottom: 14px; }
 
-  /* ---------- ریسپانسیو ---------- */
   @media (max-width: 420px) {
     .card { padding: 32px 22px 26px; border-radius: 18px; }
     .otp-box input { width: 42px; height: 52px; font-size: 20px; }
@@ -438,11 +312,11 @@
 
     <form id="form-password" novalidate>
       <div class="field">
-        <label for="phone1">شماره موبایل</label>
+        <label for="identifier">شماره موبایل یا ایمیل</label>
         <span class="icon" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
         </span>
-        <input type="tel" id="phone1" name="phone" placeholder="۰۹۱۲ ـ ـ ـ ـ ـ ـ ـ" autocomplete="username" inputmode="tel" required>
+        <input type="text" id="identifier" name="identifier" placeholder="۰۹۱۲xxxxxxx یا you@gmail.com" autocomplete="username" required>
       </div>
 
       <div class="field">
@@ -452,7 +326,7 @@
         </span>
         <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
         <button type="button" class="toggle-pass" id="toggle-pass" aria-label="نمایش رمز">
-          <svg id="eye" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
         </button>
       </div>
 
@@ -472,31 +346,31 @@
     <div class="divider">یا</div>
 
     <button type="button" class="btn btn-ghost" id="go-otp">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-3.5-.8L3 20l1-4.4a8.4 8.4 0 1117-4.1z"/></svg>
-      ورود با کد یکبارمصرف
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+      ورود با کد ایمیل (جی‌میل)
     </button>
   </section>
 
-  <!-- ================= تب: ورود با OTP ================= -->
-  <section class="panel" id="panel-otp" aria-label="ورود با کد یکبارمصرف">
+  <!-- ================= تب: ورود با کد ایمیلی ================= -->
+  <section class="panel" id="panel-otp" aria-label="ورود با کد ایمیلی">
     <div class="back-row">
       <button type="button" class="link" id="back-password">→ بازگشت به ورود با رمز</button>
     </div>
 
-    <!-- مرحله ۱: گرفتن شماره -->
+    <!-- مرحله ۱: گرفتن ایمیل -->
     <div id="otp-step1">
-      <h1 class="title" style="font-size:21px">ورود با کد یکبارمصرف</h1>
-      <p class="subtitle">شماره موبایلت را وارد کن تا کد برایت پیامک شود</p>
+      <h1 class="title" style="font-size:21px">ورود با کد ایمیلی</h1>
+      <p class="subtitle">ایمیل جی‌میلیت را وارد کن تا کد برایت ارسال شود</p>
 
       <div class="msg" id="msg-otp" role="alert"></div>
 
-      <form id="form-otp-phone" novalidate>
+      <form id="form-otp-email" novalidate>
         <div class="field">
-          <label for="phone2">شماره موبایل</label>
+          <label for="email-otp">ایمیل جی‌میل</label>
           <span class="icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
           </span>
-          <input type="tel" id="phone2" name="phone" placeholder="۰۹۱۲ ـ ـ ـ ـ ـ ـ ـ" inputmode="tel" required>
+          <input type="email" id="email-otp" name="email" placeholder="you@gmail.com" inputmode="email" autocomplete="email" required>
         </div>
         <button type="submit" class="btn" id="btn-send-otp">
           <span class="spinner" aria-hidden="true"></span>
@@ -509,7 +383,7 @@
     <div id="otp-step2" hidden>
       <div class="otp-head">
         <h1 class="title" style="font-size:21px">کد تایید را وارد کن</h1>
-        <p class="subtitle">کد ۶ رقمی به شماره <span class="phone" id="masked-phone"></span> پیامک شد</p>
+        <p class="subtitle">کد ۶ رقمی به <span class="phone" id="masked-email"></span> ایمیل شد</p>
       </div>
 
       <div class="msg" id="msg-otp2" role="alert"></div>
@@ -533,7 +407,7 @@
           <span class="spinner" aria-hidden="true"></span>
           <span class="btn-label">تایید و ورود</span>
         </button>
-        <button type="button" class="btn btn-ghost" id="change-phone">اصلاح شماره</button>
+        <button type="button" class="btn btn-ghost" id="change-email">اصلاح ایمیل</button>
       </form>
     </div>
   </section>
@@ -555,12 +429,17 @@
   function toEn(v) {
     return String(v).replace(/[۰-۹]/g, function (d) { return FA.indexOf(d); });
   }
+  var EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
   function showMsg(el, type, text) {
     el.className = "msg show " + type;
     el.textContent = text;
   }
   function hideMsg(el) { el.className = "msg"; }
   function setLoading(btn, on) { btn.classList.toggle("loading", on); btn.disabled = on; }
+
+  function goDashboard() {
+    window.location.href = "/dashboard";
+  }
 
   /* ---------- نمایش/مخفی رمز ---------- */
   $("#toggle-pass").addEventListener("click", function () {
@@ -577,8 +456,8 @@
     $("#panel-otp").classList.toggle("active", name === "otp");
   }
   $("#go-otp").addEventListener("click", function () {
-    var p = $("#phone1").value.trim();
-    if (p) $("#phone2").value = p;
+    var v = $("#identifier").value.trim();
+    if (v.indexOf("@") !== -1) $("#email-otp").value = v;
     showPanel("otp");
     otpStep(1);
   });
@@ -587,23 +466,35 @@
     showPanel("password");
   });
   $("#forgot").addEventListener("click", function () {
-    showMsg($("#msg-password"), "info", "بازیابی رمز به‌زودی فعال می‌شود. فعلاً با کد یکبارمصرف وارد شو.");
+    showMsg($("#msg-password"), "info", "بازیابی رمز به‌زودی فعال می‌شود. فعلاً با کد ایمیلی وارد شو.");
   });
 
-  /* ---------- ورود با رمز ---------- */
+  /* ---------- ورود با رمز (شماره یا ایمیل) ---------- */
   $("#form-password").addEventListener("submit", function (e) {
     e.preventDefault();
     var btn = $("#btn-password");
     hideMsg($("#msg-password"));
 
-    var phone = toEn($("#phone1").value).replace(/[\s-]/g, "");
+    var idf = $("#identifier").value.trim();
     var pass = $("#password").value;
+    var isEmail = idf.indexOf("@") !== -1;
 
-    if (!/^09\d{9}$/.test(phone)) {
-      showMsg($("#msg-password"), "error", "شماره موبایل معتبر نیست؛ مثل ۰۹۱۲۳۴۵۶۷۸۹ واردش کن.");
-      $("#phone1").focus();
-      return;
+    if (isEmail) {
+      if (!EMAIL_RE.test(idf)) {
+        showMsg($("#msg-password"), "error", "ایمیل معتبر نیست؛ مثل you@gmail.com واردش کن.");
+        $("#identifier").focus();
+        return;
+      }
+    } else {
+      var phone = toEn(idf).replace(/[\s-]/g, "");
+      if (!/^09\d{9}$/.test(phone)) {
+        showMsg($("#msg-password"), "error", "شماره موبایل یا ایمیل معتبر نیست.");
+        $("#identifier").focus();
+        return;
+      }
+      idf = phone;
     }
+
     if (pass.length < 8) {
       showMsg($("#msg-password"), "error", "رمز عبور باید حداقل ۸ کاراکتر باشد.");
       $("#password").focus();
@@ -614,13 +505,13 @@
     fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: phone, password: pass })
+      body: JSON.stringify({ identifier: idf, password: pass })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.ok) {
-          showMsg($("#msg-password"), "ok", "خوش آمدی " + data.user.name + "! در حال ورود…");
-          // TODO: ریدایرکت به داشبورد بعد از تکمیل بخش اصلی
+          showMsg($("#msg-password"), "ok", "خوش آمدی " + data.user.name + "! در حال رفتن به داشبورد…");
+          setTimeout(goDashboard, 600);
         } else {
           showMsg($("#msg-password"), "error", data.error || "ورود ناموفق بود.");
         }
@@ -631,25 +522,25 @@
       .finally(function () { setLoading(btn, false); });
   });
 
-  /* ---------- OTP: دو مرحله ---------- */
-  var otpPhone = "", timerId = null;
+  /* ---------- OTP ایمیلی: دو مرحله ---------- */
+  var otpEmail = "", timerId = null;
 
   function otpStep(n) {
     $("#otp-step1").hidden = n !== 1;
     $("#otp-step2").hidden = n !== 2;
-    if (n === 1) { stopTimer(); $("#phone2").focus(); }
-    else { $("#otp-box input")[0] && $("#otp-box").querySelector("input").focus(); }
+    if (n === 1) { stopTimer(); $("#email-otp").focus(); }
+    else { var f = $("#otp-box").querySelector("input"); if (f) f.focus(); }
   }
 
-  $("#form-otp-phone").addEventListener("submit", function (e) {
+  $("#form-otp-email").addEventListener("submit", function (e) {
     e.preventDefault();
     var btn = $("#btn-send-otp");
     hideMsg($("#msg-otp"));
 
-    var phone = toEn($("#phone2").value).replace(/[\s-]/g, "");
-    if (!/^09\d{9}$/.test(phone)) {
-      showMsg($("#msg-otp"), "error", "شماره موبایل معتبر نیست؛ مثل ۰۹۱۲۳۴۵۶۷۸۹ واردش کن.");
-      $("#phone2").focus();
+    var email = $("#email-otp").value.trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) {
+      showMsg($("#msg-otp"), "error", "ایمیل معتبر نیست؛ مثل you@gmail.com واردش کن.");
+      $("#email-otp").focus();
       return;
     }
 
@@ -657,13 +548,13 @@
     fetch("/api/otp/request", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: phone })
+      body: JSON.stringify({ email: email })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.ok) {
-          otpPhone = phone;
-          $("#masked-phone").textContent = phone.slice(0, 4) + "***" + phone.slice(-3);
+          otpEmail = email;
+          $("#masked-email").textContent = data.masked || email;
           otpStep(2);
           startTimer(data.ttl || 120);
           showMsg($("#msg-otp2"), "info", "کد ارسال شد. (حالت دمو: کد " + (data.demo_code || "------") + ")");
@@ -730,11 +621,11 @@
   }
 
   $("#resend").addEventListener("click", function () {
-    if (!otpPhone) return;
+    if (!otpEmail) return;
     fetch("/api/otp/request", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: otpPhone })
+      body: JSON.stringify({ email: otpEmail })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -749,7 +640,7 @@
       .catch(function () {});
   });
 
-  $("#change-phone").addEventListener("click", function () {
+  $("#change-email").addEventListener("click", function () {
     stopTimer();
     otpStep(1);
   });
@@ -771,13 +662,13 @@
     fetch("/api/otp/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: otpPhone, code: code })
+      body: JSON.stringify({ email: otpEmail, code: code })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.ok) {
-          showMsg($("#msg-otp2"), "ok", "خوش آمدی " + data.user.name + "! در حال ورود…");
-          // TODO: ریدایرکت به داشبورد بعد از تکمیل بخش اصلی
+          showMsg($("#msg-otp2"), "ok", "خوش آمدی " + data.user.name + "! در حال رفتن به داشبورد…");
+          setTimeout(goDashboard, 600);
         } else {
           showMsg($("#msg-otp2"), "error", data.error || "کد تایید نشد.");
           otpInputs.forEach(function (x) { x.value = ""; x.classList.remove("filled"); });
