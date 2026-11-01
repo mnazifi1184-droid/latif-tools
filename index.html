@@ -405,18 +405,19 @@
     return Promise.resolve(new Response(JSON.stringify({ ok: false, error: msg }),
       { status: code || 400, headers: { "Content-Type": "application/json" } }));
   }
+  var RESET_HINT = "پایین صفحه «بازنشانی داده‌های دمو» را بزن.";
   window.fetch = function (url, opts) {
     var body = {};
     try { body = JSON.parse((opts && opts.body) || "{}"); } catch (e) {}
     if (url === "/api/register") {
-      var u = String(body.username || "").trim();
+      var u = String(body.username || "").trim().toLowerCase();
       if (!/^[A-Za-z0-9_.]{3,20}$/.test(u))
         return fail("نام کاربری باید ۳ تا ۲۰ کاراکتر انگلیسی، عدد، نقطه یا زیرخط باشد.");
       if (String(body.password || "").length < 8)
         return fail("رمز عبور باید حداقل ۸ کاراکتر باشد.");
       var taken = localStorage.getItem("latif_user_name");
       if (taken && taken === u)
-        return fail("این نام کاربری قبلاً گرفته شده؛ یکی دیگر انتخاب کن.");
+        return fail("این نام کاربری در همین مرورگر قبلاً ثبت شده و رمزش با رمزی که الان وارد کردی یکی نیست — " + RESET_HINT);
       localStorage.setItem("latif_user_name", u);
       localStorage.setItem("latif_pass", String(body.password));
       var user1 = { username: u, name: u };
@@ -424,11 +425,11 @@
       return ok({ ok: true, user: user1 });
     }
     if (url === "/api/login") {
-      var u2 = String(body.username || "").trim();
+      var u2 = String(body.username || "").trim().toLowerCase();
       var stored = localStorage.getItem("latif_user_name");
       if (!stored || stored !== u2 ||
           localStorage.getItem("latif_pass") !== String(body.password || ""))
-        return fail("نام کاربری یا رمز عبور اشتباه است.");
+        return fail("نام کاربری یا رمز عبور اشتباه است. اگر رمز را فراموش کردی، " + RESET_HINT);
       var user2 = { username: u2, name: u2 };
       localStorage.setItem("latif_user", JSON.stringify(user2));
       return ok({ ok: true, user: user2 });
@@ -443,6 +444,29 @@
     }
     return realFetch(url, opts);
   };
+  /* --- دکمه بازنشانی داده‌های دمو --- */
+  function addReset() {
+    if (document.getElementById("demo-reset")) return;
+    var a = document.createElement("a");
+    a.id = "demo-reset";
+    a.href = "#";
+    a.textContent = "بازنشانی داده‌های دمو";
+    a.style.cssText = "position:fixed;bottom:14px;left:16px;font-size:12px;" +
+      "color:rgba(242,233,216,.55);text-decoration:none;z-index:9999;cursor:pointer;";
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      ["latif_user_name", "latif_pass", "latif_user"].forEach(function (k) {
+        localStorage.removeItem(k);
+      });
+      window.location.reload();
+    });
+    document.body.appendChild(a);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", addReset);
+  } else {
+    addReset();
+  }
 })();
 </script>
 
