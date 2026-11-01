@@ -15,13 +15,41 @@ from contextlib import closing
 from flask import (Flask, jsonify, redirect, render_template, request,
                    send_from_directory, session, url_for)
 
-app = Flask(__name__)
-app.secret_key = secrets.token_hex(32)  # TODO: از متغیر محیطی بخوان در استقرار واقعی
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "latif.db")
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "latif.db")
+app = Flask(__name__)
+
+# Persistent secret key: survive restarts so sessions do not break.
+_SECRET_FILE = os.path.join(BASE_DIR, ".secret_key")
+
+
+def _load_secret() -> str:
+    try:
+        with open(_SECRET_FILE) as f:
+            token = f.read().strip()
+        if token:
+            return token
+    except FileNotFoundError:
+        pass
+    token = secrets.token_hex(32)
+    with open(_SECRET_FILE, "w") as f:
+        f.write(token)
+    return token
+
+
+app.secret_key = _load_secret()
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_.]{3,20}$")
 MIN_PASS_LEN = 8
+
+CREATE_USERS = """CREATE TABLE IF NOT EXISTS users (
+                      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                      username   TEXT UNIQUE NOT NULL,
+                      pass_hash  TEXT NOT NULL,
+                      salt       BLOB NOT NULL,
+                      created_at TEXT DEFAULT (datetime('now'))
+                  )"""
 
 
 # ---------------------------------------------------------------- database
@@ -32,17 +60,10 @@ def db() -> sqlite3.Connection:
     return conn
 
 
-def init_db() -> None:
+def ensure_schema() -> None:
+    """Create the users table if the DB is missing/empty (self-healing)."""
     with closing(db()) as conn:
-        conn.execute(
-            """CREATE TABLE IF NOT EXISTS users (
-                   id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                   username   TEXT UNIQUE NOT NULL,
-                   pass_hash  TEXT NOT NULL,
-                   salt       BLOB NOT NULL,
-                   created_at TEXT DEFAULT (datetime('now'))
-               )"""
-        )
+        conn.execute(CREATE_USERS)
         conn.commit()
 
 
@@ -56,10 +77,49 @@ def verify_password(password: str, salt: bytes, expected_hex: str) -> bool:
 
 
 def get_user(username: str):
+    try:
+        return _query_user(username)
+    except sqlite3.OperationalError:  # e.g. wiped DB file — rebuild schema
+        ensure_schema()
+        return _query_user(username)
+
+
+def _query_user(username: str):
     with closing(db()) as conn:
         return conn.execute(
             "SELECT * FROM users WHERE username = ?", (username,)
         ).fetchone()
+
+
+def insert_user(username: str, password: str) -> None:
+    salt = os.urandom(16)
+    try:
+        _exec_insert(username, hash_password(password, salt), salt)
+    except sqlite3.OperationalError:
+        ensure_schema()
+        _exec_insert(username, hash_password(password, salt), salt)
+
+
+def _exec_insert(username: str, pass_hash: str, salt: bytes) -> None:
+    with closing(db()) as conn:
+        conn.execute(
+            "INSERT INTO users (username, pass_hash, salt) VALUES (?, ?, ?)",
+            (username, pass_hash, salt),
+        )
+        conn.commit()
+
+
+def update_password(user_id: int, password: str) -> None:
+    salt = os.urandom(16)
+    with closing(db()) as conn:
+        conn.execute("UPDATE users SET pass_hash = ?, salt = ? WHERE id = ?",
+                     (hash_password(password, salt), salt, user_id))
+        conn.commit()
+
+
+def norm_username(raw: str) -> str:
+    """Trim + lowercase so Ali / ali are the same account."""
+    return str(raw).strip().lower()
 
 
 def current_user() -> dict | None:
@@ -101,7 +161,7 @@ def vendor(fname: str):
 @app.post("/api/register")
 def api_register():
     data = request.get_json(silent=True) or {}
-    username = str(data.get("username", "")).strip()
+    username = norm_username(data.get("username", ""))
     password = str(data.get("password", ""))
 
     if not USERNAME_RE.fullmatch(username):
@@ -111,13 +171,7 @@ def api_register():
     if get_user(username):
         return jsonify(ok=False, error="این نام کاربری قبلاً گرفته شده؛ یکی دیگر انتخاب کن."), 409
 
-    salt = os.urandom(16)
-    with closing(db()) as conn:
-        conn.execute(
-            "INSERT INTO users (username, pass_hash, salt) VALUES (?, ?, ?)",
-            (username, hash_password(password, salt), salt),
-        )
-        conn.commit()
+    insert_user(username, password)
 
     user = {"username": username, "name": username}
     session["user"] = user
@@ -127,7 +181,7 @@ def api_register():
 @app.post("/api/login")
 def api_login():
     data = request.get_json(silent=True) or {}
-    username = str(data.get("username", "")).strip()
+    username = norm_username(data.get("username", ""))
     password = str(data.get("password", ""))
 
     row = get_user(username)
@@ -157,11 +211,7 @@ def api_change_password():
     if new == current:
         return jsonify(ok=False, error="رمز جدید نباید با رمز فعلی یکسان باشد."), 400
 
-    salt = os.urandom(16)
-    with closing(db()) as conn:
-        conn.execute("UPDATE users SET pass_hash = ?, salt = ? WHERE id = ?",
-                     (hash_password(new, salt), salt, row["id"]))
-        conn.commit()
+    update_password(row["id"], new)
     return jsonify(ok=True)
 
 
@@ -171,7 +221,7 @@ def api_logout():
     return jsonify(ok=True)
 
 
-init_db()
+ensure_schema()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=False)

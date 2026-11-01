@@ -18,3 +18,9 @@ env/
 # Test artifacts
 *.png
 !docs/**/*.png
+
+# Database & secrets (never commit)
+latif.db
+latif.db-*
+*.db
+.secret_key
