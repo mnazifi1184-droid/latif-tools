@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-<title>داشبورد | لاتیف تولز</title>
+<title>داشبورد | لطیف تولز</title>
 <style>
   @font-face { font-family: "Vazirmatn"; src: url("fonts/Vazirmatn-Regular.ttf"); font-weight: 400; font-display: swap; }
   @font-face { font-family: "Vazirmatn"; src: url("fonts/Vazirmatn-Bold.ttf"); font-weight: 700; font-display: swap; }
@@ -188,7 +188,7 @@
         <path d="M9 12.5l2 2 4-4.5" stroke="#5B7CFA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <div>لاتیف تولز<small>جعبه‌ابزار آنلاین</small></div>
+    <div>لطیف تولز<small>جعبه‌ابزار آنلاین</small></div>
   </div>
 
   <div class="userbox">
@@ -285,6 +285,15 @@
       <button class="copy" data-copy="b64-out">کپی نتیجه</button>
     </div>
 
+    <!-- ۶: تغییر رمز عبور -->
+    <div class="tool">
+      <h2><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/><path d="M12 14.5v2.5"/></svg></span>تغییر رمز عبور</h2>
+      <p class="desc">رمز جدید حداقل ۸ کاراکتر</p>
+      <input class="in" type="password" id="cp-current" placeholder="رمز فعلی" autocomplete="current-password">
+      <input class="in" type="password" id="cp-new" placeholder="رمز جدید" autocomplete="new-password" style="margin-top:8px">
+      <div class="row"><button class="btn" id="cp-go">ذخیره رمز جدید</button></div>
+    </div>
+
     <!-- ۶: نمودار فعالیت (Chart.js) -->
     <div class="tool full">
       <h2><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>فعالیت هفت روز گذشته</h2>
@@ -294,12 +303,65 @@
 
   </section>
 
-  <footer class="foot"><strong>لاتیف تولز</strong> — جعبه‌ابزار آنلاین، ساده و سریع</footer>
+  <footer class="foot"><strong>لطیف تولز</strong> — جعبه‌ابزار آنلاین، ساده و سریع</footer>
 </main>
 
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="vendor/chart.umd.js"></script>
+<script>
+/* ==== دموی استاتیک برای GitHub Pages — شبیه‌سازی API داخل مرورگر ==== */
+(function () {
+  var realFetch = window.fetch.bind(window);
+  function ok(obj) {
+    return Promise.resolve(new Response(JSON.stringify(obj),
+      { status: 200, headers: { "Content-Type": "application/json" } }));
+  }
+  function fail(msg, code) {
+    return Promise.resolve(new Response(JSON.stringify({ ok: false, error: msg }),
+      { status: code || 400, headers: { "Content-Type": "application/json" } }));
+  }
+  window.fetch = function (url, opts) {
+    var body = {};
+    try { body = JSON.parse((opts && opts.body) || "{}"); } catch (e) {}
+    if (url === "/api/register") {
+      var u = String(body.username || "").trim();
+      if (!/^[A-Za-z0-9_.]{3,20}$/.test(u))
+        return fail("نام کاربری باید ۳ تا ۲۰ کاراکتر انگلیسی، عدد، نقطه یا زیرخط باشد.");
+      if (String(body.password || "").length < 8)
+        return fail("رمز عبور باید حداقل ۸ کاراکتر باشد.");
+      var taken = localStorage.getItem("latif_user_name");
+      if (taken && taken === u)
+        return fail("این نام کاربری قبلاً گرفته شده؛ یکی دیگر انتخاب کن.");
+      localStorage.setItem("latif_user_name", u);
+      localStorage.setItem("latif_pass", String(body.password));
+      var user1 = { username: u, name: u };
+      localStorage.setItem("latif_user", JSON.stringify(user1));
+      return ok({ ok: true, user: user1 });
+    }
+    if (url === "/api/login") {
+      var u2 = String(body.username || "").trim();
+      var stored = localStorage.getItem("latif_user_name");
+      if (!stored || stored !== u2 ||
+          localStorage.getItem("latif_pass") !== String(body.password || ""))
+        return fail("نام کاربری یا رمز عبور اشتباه است.");
+      var user2 = { username: u2, name: u2 };
+      localStorage.setItem("latif_user", JSON.stringify(user2));
+      return ok({ ok: true, user: user2 });
+    }
+    if (url === "/api/change-password") {
+      if (localStorage.getItem("latif_pass") !== String(body.current || ""))
+        return fail("رمز فعلی اشتباه است.");
+      if (String(body.new || "").length < 8)
+        return fail("رمز جدید باید حداقل ۸ کاراکتر باشد.");
+      localStorage.setItem("latif_pass", String(body.new));
+      return ok({ ok: true });
+    }
+    return realFetch(url, opts);
+  };
+})();
+</script>
+
 <script>
 (function () {
   "use strict";
@@ -427,6 +489,46 @@ if (!USER) { window.location.href = "index.html"; return; }
     try {
       setOut($("#b64-out"), decodeURIComponent(escape(atob(v))));
     } catch (e) { $("#b64-out").textContent = "متن ورودی کدشده‌ی معتبری نیست"; }
+  });
+
+  /* --- شمارنده عملیات نشست --- */
+  var ops = 0;
+  function opDone() {
+    ops++;
+    var el = document.getElementById("stat-ops");
+    if (el) el.textContent = faNum(ops);
+  }
+  ["tx-clean", "tx-fa", "tx-en", "calc-go", "conv-go", "pass-go",
+   "b64-enc", "b64-dec"].forEach(function (id) {
+    var b = document.getElementById(id);
+    if (b) b.addEventListener("click", opDone);
+  });
+
+  /* --- تغییر رمز عبور --- */
+  $("#cp-go").addEventListener("click", function () {
+    var btn = this;
+    var current = $("#cp-current").value;
+    var next = $("#cp-new").value;
+    if (!current || !next) return toast("هر دو رمز را وارد کن.");
+    if (next.length < 8) return toast("رمز جدید باید حداقل ۸ کاراکتر باشد.");
+    btn.disabled = true;
+    fetch("/api/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ current: current, new: next })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok) {
+          toast("رمز با موفقیت عوض شد ✔");
+          $("#cp-current").value = "";
+          $("#cp-new").value = "";
+        } else {
+          toast(data.error || "تغییر رمز انجام نشد.");
+        }
+      })
+      .catch(function () { toast("ارتباط با سرور برقرار نشد."); })
+      .finally(function () { btn.disabled = false; });
   });
 
   /* --- کپی --- */

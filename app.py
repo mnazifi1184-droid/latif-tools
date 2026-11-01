@@ -1,11 +1,16 @@
-"""Latif Tools — web app entry point (Flask)."""
-import json as _json
-import random
+"""Latif Tools — web app entry point (Flask).
+
+Real user system: register with a username + password, login, change password
+from the dashboard. Passwords are hashed with scrypt + a per-user random salt
+in a local SQLite database (latif.db).
+"""
+import hashlib
+import json
+import os
 import re
 import secrets
-import time
-
-import mailer
+import sqlite3
+from contextlib import closing
 
 from flask import (Flask, jsonify, redirect, render_template, request,
                    send_from_directory, session, url_for)
@@ -13,66 +18,74 @@ from flask import (Flask, jsonify, redirect, render_template, request,
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)  # TODO: از متغیر محیطی بخوان در استقرار واقعی
 
-FA_DIGITS = "۰۱۲۳۴۵۶۷۸۹"
-AR_DIGITS = "٠١٢٣٤٥٦٧٨٩"
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "latif.db")
 
-OTP_TTL = 300  # seconds — email may arrive late
-_otp_store: dict[str, dict] = {}  # email -> {"code": str, "expires": float}
-_otp_send_ts: dict[str, float] = {}  # email -> last send timestamp (rate limit)
-
-EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+USERNAME_RE = re.compile(r"^[A-Za-z0-9_.]{3,20}$")
+MIN_PASS_LEN = 8
 
 
-def normalize_digits(value: str) -> str:
-    """Convert Persian/Arabic digits to English digits."""
-    out = []
-    for ch in value:
-        if ch in FA_DIGITS:
-            out.append(str(FA_DIGITS.index(ch)))
-        elif ch in AR_DIGITS:
-            out.append(str(AR_DIGITS.index(ch)))
-        else:
-            out.append(ch)
-    return "".join(out)
+# ---------------------------------------------------------------- database
+def db() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    return conn
 
 
-def valid_phone(phone: str) -> bool:
-    return bool(re.fullmatch(r"09\d{9}", phone))
+def init_db() -> None:
+    with closing(db()) as conn:
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS users (
+                   id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                   username   TEXT UNIQUE NOT NULL,
+                   pass_hash  TEXT NOT NULL,
+                   salt       BLOB NOT NULL,
+                   created_at TEXT DEFAULT (datetime('now'))
+               )"""
+        )
+        conn.commit()
 
 
-def valid_email(email: str) -> bool:
-    return bool(EMAIL_RE.fullmatch(email))
+def hash_password(password: str, salt: bytes) -> str:
+    return hashlib.scrypt(password.encode("utf-8"), salt=salt,
+                          n=2**14, r=8, p=1, dklen=32).hex()
 
 
-def is_email(identifier: str) -> bool:
-    return "@" in identifier
+def verify_password(password: str, salt: bytes, expected_hex: str) -> bool:
+    return secrets.compare_digest(hash_password(password, salt), expected_hex)
 
 
-def mask_email(email: str) -> str:
-    local, _, domain = email.partition("@")
-    return f"{local[:2]}***@{domain}" if len(local) > 2 else f"***@{domain}"
+def get_user(username: str):
+    with closing(db()) as conn:
+        return conn.execute(
+            "SELECT * FROM users WHERE username = ?", (username,)
+        ).fetchone()
 
 
-def mask_phone(phone: str) -> str:
-    return f"{phone[:4]}***{phone[-3:]}"
+def current_user() -> dict | None:
+    return session.get("user")
 
 
-# ---------------- صفحات ----------------
-
+# ------------------------------------------------------------------- pages
 @app.get("/")
-def index():
+def login_page():
+    if current_user():
+        return redirect(url_for("dashboard_page"))
     return render_template("login.html")
 
 
 @app.get("/dashboard")
-def dashboard():
-    user = session.get("user")
-    if not user:
-        return redirect(url_for("index"))
-    return render_template("dashboard.html", user_json=_json.dumps(user, ensure_ascii=False))
+def dashboard_page():
+    if not current_user():
+        return redirect(url_for("login_page"))
+    return render_template("dashboard.html",
+                           user_json=json.dumps(session["user"], ensure_ascii=False))
 
 
-# ---------------- فونت‌ها (مسیر مشترک برای نسخه فلسک و استاتیک) ----------------
+@app.get("/healthz")
+def healthz():
+    return jsonify(ok=True)
+
 
 @app.get("/fonts/<path:fname>")
 def fonts(fname: str):
@@ -84,82 +97,72 @@ def vendor(fname: str):
     return send_from_directory("static/vendor", fname)
 
 
-# ---------------- API ورود ----------------
+# --------------------------------------------------------------------- api
+@app.post("/api/register")
+def api_register():
+    data = request.get_json(silent=True) or {}
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", ""))
+
+    if not USERNAME_RE.fullmatch(username):
+        return jsonify(ok=False, error="نام کاربری باید ۳ تا ۲۰ کاراکتر انگلیسی، عدد، نقطه یا زیرخط باشد."), 400
+    if len(password) < MIN_PASS_LEN:
+        return jsonify(ok=False, error="رمز عبور باید حداقل ۸ کاراکتر باشد."), 400
+    if get_user(username):
+        return jsonify(ok=False, error="این نام کاربری قبلاً گرفته شده؛ یکی دیگر انتخاب کن."), 409
+
+    salt = os.urandom(16)
+    with closing(db()) as conn:
+        conn.execute(
+            "INSERT INTO users (username, pass_hash, salt) VALUES (?, ?, ?)",
+            (username, hash_password(password, salt), salt),
+        )
+        conn.commit()
+
+    user = {"username": username, "name": username}
+    session["user"] = user
+    return jsonify(ok=True, user=user)
+
 
 @app.post("/api/login")
 def api_login():
-    """Password login with phone OR email — demo mode.
-
-    TODO: replace with a real user lookup (database / LDAP / ...).
-    """
     data = request.get_json(silent=True) or {}
-    identifier = normalize_digits(str(data.get("identifier", ""))).strip().replace(" ", "")
+    username = str(data.get("username", "")).strip()
     password = str(data.get("password", ""))
 
-    if is_email(identifier):
-        if not valid_email(identifier):
-            return jsonify(ok=False, error="ایمیل معتبر نیست."), 400
-        identity = {"email": identifier, "phone": None, "name": identifier.split("@")[0]}
-    else:
-        if not valid_phone(identifier):
-            return jsonify(ok=False, error="شماره موبایل یا ایمیل معتبر نیست."), 400
-        identity = {"phone": identifier, "email": None, "name": "کاربر لاتیف تولز"}
+    row = get_user(username)
+    if not row or not verify_password(password, row["salt"], row["pass_hash"]):
+        return jsonify(ok=False, error="نام کاربری یا رمز عبور اشتباه است."), 401
 
-    if len(password) < 8:
-        return jsonify(ok=False, error="رمز عبور باید حداقل ۸ کاراکتر باشد."), 400
-
-    # TODO: احراز هویت واقعی اینجا — چک هش رمز در دیتابیس
-    session["user"] = identity
-    return jsonify(ok=True, user=identity)
+    user = {"username": row["username"], "name": row["username"]}
+    session["user"] = user
+    return jsonify(ok=True, user=user)
 
 
-@app.post("/api/otp/request")
-def api_otp_request():
-    """Send an OTP code by EMAIL via Gmail SMTP (App Password)."""
+@app.post("/api/change-password")
+def api_change_password():
+    user = current_user()
+    if not user:
+        return jsonify(ok=False, error="ابتدا وارد شو."), 401
+
     data = request.get_json(silent=True) or {}
-    email = str(data.get("email", "")).strip().lower()
+    current = str(data.get("current", ""))
+    new = str(data.get("new", ""))
 
-    if not valid_email(email):
-        return jsonify(ok=False, error="ایمیل جی‌میل/ایمیل معتبر نیست؛ مثل example@gmail.com واردش کن."), 400
+    row = get_user(user["username"])
+    if not row or not verify_password(current, row["salt"], row["pass_hash"]):
+        return jsonify(ok=False, error="رمز فعلی اشتباه است."), 401
+    if len(new) < MIN_PASS_LEN:
+        return jsonify(ok=False, error="رمز جدید باید حداقل ۸ کاراکتر باشد."), 400
+    if new == current:
+        return jsonify(ok=False, error="رمز جدید نباید با رمز فعلی یکسان باشد."), 400
 
-    # rate limit: one email per 45s per address
-    now = time.time()
-    last = _otp_send_ts.get(email, 0)
-    if now - last < 45:
-        return jsonify(ok=False, error="کمی صبر کن؛ کد جدید بعد از ۴۵ ثانیه قابل ارسال است."), 429
-
-    code = f"{secrets.randbelow(1000000):06d}"
-    _otp_store[email] = {"code": code, "expires": time.time() + OTP_TTL}
-    _otp_send_ts[email] = now
-
-    sent = mailer.send_otp_email(email, code)
-    if not sent[0]:
-        # SMTP misconfigured or down — never leak the code, keep flow safe
-        return jsonify(ok=False, error="ارسال ایمیل با خطا مواجه شد: " + sent[1]), 502
-
-    resp = jsonify(ok=True, ttl=OTP_TTL, masked=mask_email(email))
-    return resp
-
-
-@app.post("/api/otp/verify")
-def api_otp_verify():
-    data = request.get_json(silent=True) or {}
-    email = str(data.get("email", "")).strip().lower()
-    code = normalize_digits(str(data.get("code", ""))).replace(" ", "")
-
-    if not valid_email(email):
-        return jsonify(ok=False, error="ایمیل معتبر نیست."), 400
-
-    record = _otp_store.get(email)
-    if not record or time.time() > record["expires"]:
-        return jsonify(ok=False, error="کد منقضی شده است؛ دوباره درخواست بده."), 400
-    if code != record["code"]:
-        return jsonify(ok=False, error="کد وارد شده اشتباه است."), 400
-
-    _otp_store.pop(email, None)
-    identity = {"email": email, "phone": None, "name": email.split("@")[0]}
-    session["user"] = identity
-    return jsonify(ok=True, user=identity)
+    salt = os.urandom(16)
+    with closing(db()) as conn:
+        conn.execute("UPDATE users SET pass_hash = ?, salt = ? WHERE id = ?",
+                     (hash_password(new, salt), salt, row["id"]))
+        conn.commit()
+    return jsonify(ok=True)
 
 
 @app.post("/api/logout")
@@ -168,10 +171,7 @@ def api_logout():
     return jsonify(ok=True)
 
 
-@app.get("/healthz")
-def healthz():
-    return jsonify(ok=True)
-
+init_db()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=False)
